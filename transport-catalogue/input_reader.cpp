@@ -7,6 +7,7 @@ namespace input_output
         size_t colon = line.find(':');
         size_t name_start = line.find_first_not_of(' ', 4);
         size_t name_end = line.find_last_not_of(' ', colon - 1);
+        std::string name = line.substr(name_start, name_end - name_start + 1);
 
         size_t comma = line.find(',', name_end);
         size_t longitude_start = line.find_first_not_of(' ', colon + 1);
@@ -37,11 +38,11 @@ namespace input_output
 
         catalogue.AddStop
         (
-            move(line.substr(name_start, name_end - name_start + 1)),
+            name,
             { std::stod(line.substr(longitude_start, longitude_end - longitude_start + 1)),
-            std::stod(line.substr(latitude_start, latitude_end - latitude_start + 1)) },
-            distances
+            std::stod(line.substr(latitude_start, latitude_end - latitude_start + 1)) }            
         );
+        catalogue.AddStopsDistances(name, distances);
     }
     void ParseRoutreCommand(TransportCatalogue& catalogue, const std::string& line)
     {

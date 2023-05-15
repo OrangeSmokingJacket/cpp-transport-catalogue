@@ -112,13 +112,15 @@ bool Route::operator>=(const Route& other) const
 }
 
 
-void TransportCatalogue::AddStop(const std::string& name, const polar_coordinates::Coordinates& coords, std::vector<std::pair<std::string, double>> distances_to)
+void TransportCatalogue::AddStop(const std::string& name, const polar_coordinates::Coordinates& coords)
 {
 	if (all_stops.contains(name))
 		all_stops.at(name).GetCoordinates() = coords;
 	else
 		all_stops.insert({ name, { name, coords } });
-
+}
+void TransportCatalogue::AddStopsDistances(const std::string& name, std::vector<std::pair<std::string, double>> distances_to)
+{
 	for (const auto [stop, dst] : distances_to)
 	{
 		distances.insert({ {name, stop}, dst });

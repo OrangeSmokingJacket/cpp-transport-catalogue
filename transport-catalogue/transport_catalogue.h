@@ -75,7 +75,8 @@ struct StopPairHasher
 class TransportCatalogue
 {
 public:
-	void AddStop(const std::string& name, const polar_coordinates::Coordinates& coords, std::vector<std::pair<std::string, double>> distances_to);
+	void AddStop(const std::string& name, const polar_coordinates::Coordinates& coords);
+	void AddStopsDistances(const std::string& name, std::vector<std::pair<std::string, double>> distances_to);
 	void AddRoute(const std::string& name, const std::vector<std::string>& stops_names, bool circular);
 
 	Stop GetStop(const std::string& name);
