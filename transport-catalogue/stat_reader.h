@@ -8,5 +8,5 @@
 
 namespace input_output
 {
-	void GetStats(TransportCatalogue& catalogue, std::istream& input);
+	void GetStats(TransportCatalogue& catalogue, std::istream& input, std::ostream& out);
 }

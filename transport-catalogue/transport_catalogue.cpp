@@ -1,7 +1,7 @@
 #include "transport_catalogue.h"
 
 
-void Stop::AddRoute(std::string route_name)
+void Stop::AddRoute(const std::string& route_name)
 {
 	routes.insert(route_name);
 }

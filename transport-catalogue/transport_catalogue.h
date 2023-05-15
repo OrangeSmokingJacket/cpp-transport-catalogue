@@ -20,7 +20,7 @@ public:
 		routes = other.routes;
     }
 
-	void AddRoute(std::string route_name);
+	void AddRoute(const std::string& route_name);
 
     const std::string GetName() const;
 	polar_coordinates::Coordinates& GetCoordinates();
