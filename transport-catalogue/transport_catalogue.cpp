@@ -1,157 +1,67 @@
 #include "transport_catalogue.h"
 
-
-void Stop::AddRoute(const std::string& route_name)
-{
-	routes.insert(route_name);
-}
-
-const std::string Stop::GetName() const
-{
-	return name;
-}
-polar_coordinates::Coordinates& Stop::GetCoordinates()
-{
-	return coords;
-}
-const polar_coordinates::Coordinates Stop::GetCoordinates() const
-{
-	return coords;
-}
-std::set<std::string> Stop::GetRoutes()
-{
-	return routes;
-}
-
-Stop& Stop::operator=(const Stop& other)
-{
-	name = other.name;
-	coords = other.coords;
-	return *this;
-}
-
-bool Stop::operator==(const Stop& other) const
-{
-	return name == other.name;
-}
-bool Stop::operator!=(const Stop& other) const
-{
-	return !(*this == other);
-}
-bool Stop::operator<(const Stop& other) const
-{
-	return name < other.name;
-}
-bool Stop::operator<=(const Stop& other) const
-{
-	return *this == other || *this < other;
-}
-bool Stop::operator>(const Stop& other) const
-{
-	return other.name < name;
-}
-bool Stop::operator>=(const Stop& other) const
-{
-	return *this == other || *this > other;
-}
-
-
-std::string Route::GetName()
-{
-	return name;
-}
-const std::vector<std::string>& Route::GetStops() const
-{
-	return stops;
-}
-Route::RouteType Route::GetRouteType() const
-{
-	return type;
-}
-int Route::GetStopsCount() const
-{
-	if (type == RouteType::Curcular)
-		return stops.size();
-	else
-		return stops.size() * 2 - 1;
-}
-int Route::GetRoutesUniqueStops()
-{
-	// for small vectors this is faster than use sort-unique-erase
-	std::set<std::string> unique;
-	for (const std::string& stop : stops)
-	{
-		unique.insert(stop);
-	}
-	return unique.size();
-}
-
-bool Route::operator==(const Route& other) const
-{
-	return name == other.name;
-}
-bool Route::operator!=(const Route& other) const
-{
-	return !(*this == other);
-}
-bool Route::operator<(const Route& other) const
-{
-	return name < other.name;
-}
-bool Route::operator<=(const Route& other) const
-{
-	return *this == other || *this < other;
-}
-bool Route::operator>(const Route& other) const
-{
-	return other.name < name;
-}
-bool Route::operator>=(const Route& other) const
-{
-	return *this == other || *this > other;
-}
-
-
 void TransportCatalogue::AddStop(const std::string& name, const polar_coordinates::Coordinates& coords)
 {
 	if (all_stops.contains(name))
-		all_stops.at(name).GetCoordinates() = coords;
+		all_stops.at(name).SetCoordinates(coords);
 	else
 		all_stops.insert({ name, { name, coords } });
 }
 void TransportCatalogue::AddStopsDistances(const std::string& name, std::vector<std::pair<std::string, double>> distances_to)
 {
-	for (const auto [stop, dst] : distances_to)
+	for (const auto& [stop, dst] : distances_to)
 	{
 		distances.insert({ {name, stop}, dst });
 	}
 }
 void TransportCatalogue::AddRoute(const std::string& name, const std::vector<std::string>& stops_names, bool circular)
 {
+	std::vector<Stop*> stops;
 	for (const std::string& stop : stops_names)
 	{
 		// If there are no such stop, add a place holder
 		if (!all_stops.contains(stop))
 			all_stops.insert({ stop, { stop } });
 
-		all_stops.at(stop).AddRoute(name);
+		stops.push_back(&(all_stops.at(stop)));
 	}
-	all_routes.insert({ name, { std::move(name), std::move(stops_names), static_cast<Route::RouteType>(circular) } });
+
+	all_routes.insert({ name, { std::move(name), std::move(stops), static_cast<Route::RouteType>(circular) } });
+
+	Route* route_ptr = &(all_routes.at(name));
+	for (const std::string& stop : stops_names)
+	{
+		all_stops.at(stop).AddRoute(route_ptr);
+	}
 }
 
-Stop TransportCatalogue::GetStop(const std::string& name)
+std::optional<Stop> TransportCatalogue::GetStop(const std::string& name)
 {
+	std::optional<Stop> empty;
 	if (all_stops.contains(name))
 		return all_stops.at(name);
 	else
-		return { "" };
+		return empty;
 }
-Route TransportCatalogue::GetRoute(const std::string& name)
+std::optional<Route> TransportCatalogue::GetRoute(const std::string& name)
 {
+	std::optional<Route> empty;
 	if (all_routes.contains(name))
 		return all_routes.at(name);
 	else
-		return {};
+		return empty;
+}
+std::vector<Route*> TransportCatalogue::GetAllRoutes()
+{
+	std::vector<Route*> result;
+	result.reserve(all_routes.size());
+
+	for (const auto route : all_routes)
+	{
+		result.emplace_back(&all_routes.at(route.first)); // &(route.second) is not compiling
+	}
+	std::sort(result.begin(), result.end(), [](Route* lhs, Route* rhs) { return lhs->GetName() < rhs->GetName(); });
+	return result;
 }
 
 double TransportCatalogue::GetDistanceBetweenStops(const std::string& name_a, const std::string& name_b) const
@@ -167,23 +77,23 @@ double TransportCatalogue::GetDistanceBetweenStops(const std::string& name_a, co
 double TransportCatalogue::CalculateRouteLength(const std::string& name) const
 {
 	double result = 0.0;
-	std::vector<std::string> stops_names = all_routes.at(name).GetStops();
+	std::vector<Stop*> stops = all_routes.at(name).GetStops();
 
 	// It could be one if and two cicles or one cicle and stops_names.size() if's
 
 	if (all_routes.at(name).GetRouteType() == Route::Linear)
 	{
-		for (int i = 1; i < stops_names.size(); i++)
+		for (size_t i = 1; i < stops.size(); i++)
 		{
-			result += GetDistanceBetweenStops(stops_names[i - 1], stops_names[i]);
-			result += GetDistanceBetweenStops(stops_names[i], stops_names[i - 1]);
+			result += GetDistanceBetweenStops(stops[i - 1]->GetName(), stops[i]->GetName());
+			result += GetDistanceBetweenStops(stops[i]->GetName(), stops[i - 1]->GetName());
 		}
 	}
 	else
 	{
-		for (int i = 1; i < stops_names.size(); i++)
+		for (size_t i = 1; i < stops.size(); i++)
 		{
-			result += GetDistanceBetweenStops(stops_names[i - 1], stops_names[i]);
+			result += GetDistanceBetweenStops(stops[i - 1]->GetName(), stops[i]->GetName());
 		}
 	}
 
@@ -192,10 +102,10 @@ double TransportCatalogue::CalculateRouteLength(const std::string& name) const
 double TransportCatalogue::CalculateRouteLength_RAW(const std::string& name) const
 {
 	double result = 0.0;
-	std::vector<std::string> stops_names = all_routes.at(name).GetStops();
-	for (int i = 1; i < stops_names.size(); i++)
+	std::vector<Stop*> stops = all_routes.at(name).GetStops();
+	for (size_t i = 1; i < stops.size(); i++)
 	{
-		result += ComputeDistance(all_stops.at(stops_names[i - 1]).GetCoordinates(), all_stops.at(stops_names[i]).GetCoordinates());
+		result += ComputeDistance(stops[i - 1]->GetCoordinates(), stops[i]->GetCoordinates());
 	}
 	if (all_routes.at(name).GetRouteType() == Route::Linear)
 		result *= 2;

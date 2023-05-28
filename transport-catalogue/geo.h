@@ -1,6 +1,8 @@
 #pragma once
+
 #include <string>
 #include <cmath>
+
 
 namespace polar_coordinates
 {
@@ -8,6 +10,12 @@ namespace polar_coordinates
     {
         double lat;
         double lng;
+        Coordinates() = default;
+        Coordinates(double latitude, double longitude)
+        {
+            lat = latitude;
+            lng = longitude;
+        }
         bool operator==(const Coordinates& other) const
         {
             return lat == other.lat && lng == other.lng;
