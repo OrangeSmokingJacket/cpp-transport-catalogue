@@ -248,46 +248,70 @@ namespace json
         throw ParsingError("");
     }
 
-    Node::Node() : value(nullptr) {}
-    Node::Node(nullptr_t ptr) : value(ptr) {}
-    Node::Node(bool value_bool) : value(move(value_bool)) {}
-    Node::Node(Array array) : value(move(array)) {}
-    Node::Node(Dict map) : value(move(map)) {}
-    Node::Node(int value_int) : value(move(value_int)) {}
-    Node::Node(double value_double) : value(move(value_double)) {}
-    Node::Node(string value_str) : value(move(value_str)) {}
+    Node::Node()
+    {
+        *this = nullptr;
+    }
+    Node::Node(nullptr_t ptr)
+    {
+        *this = move(ptr);
+    }
+    Node::Node(bool value_bool)
+    {
+        *this = (move(value_bool));
+    }
+    Node::Node(Array array)
+    {
+        *this = move(array);
+    }
+    Node::Node(Dict map)
+    {
+        *this = move(map);
+    }
+    Node::Node(int value_int)
+    {
+        *this = move(value_int);
+    }
+    Node::Node(double value_double)
+    {
+        *this = move(value_double);
+    }
+    Node::Node(string value_str)
+    {
+        *this = move(value_str);
+    }
 
     bool Node::IsNull() const
     {
-        return holds_alternative<nullptr_t>(value);
+        return holds_alternative<nullptr_t>(*this);
     }
     bool Node::IsBool() const
     {
-        return holds_alternative<bool>(value);
+        return holds_alternative<bool>(*this);
     }
     bool Node::IsArray() const
     {
-        return holds_alternative<Array>(value);
+        return holds_alternative<Array>(*this);
     }
     bool Node::IsMap() const
     {
-        return holds_alternative<Dict>(value);
+        return holds_alternative<Dict>(*this);
     }
     bool Node::IsInt() const
     {
-        return holds_alternative<int>(value);
+        return holds_alternative<int>(*this);
     }
     bool Node::IsDouble() const
     {
-        return holds_alternative<int>(value) || holds_alternative<double>(value);
+        return holds_alternative<int>(*this) || holds_alternative<double>(*this);
     }
     bool Node::IsPureDouble() const
     {
-        return holds_alternative<double>(value);
+        return holds_alternative<double>(*this);
     }
     bool Node::IsString() const
     {
-        return holds_alternative<string>(value);
+        return holds_alternative<string>(*this);
     }
 
     bool Node::AsBool() const
@@ -295,35 +319,35 @@ namespace json
         if (!IsBool())
             throw logic_error("");
 
-        return get<bool>(value);
+        return get<bool>(*this);
     }
     const Array& Node::AsArray() const
     {
         if (!IsArray())
             throw logic_error("");
 
-        return get<Array>(value);
+        return get<Array>(*this);
     }
     const Dict& Node::AsMap() const
     {
         if (!IsMap())
             throw logic_error("");
 
-        return std::get<Dict>(value);
+        return get<Dict>(*this);
     }
     int Node::AsInt() const
     {
         if (!IsInt())
             throw logic_error("");
 
-        return get<int>(value);
+        return get<int>(*this);
     }
     double Node::AsDouble() const
     {
         if (IsPureDouble())
-            return get<double>(value);
+            return get<double>(*this);
         if (IsInt())
-            return static_cast<double>(get<int>(value));
+            return static_cast<double>(get<int>(*this));
 
             throw logic_error("");
     }
@@ -332,16 +356,16 @@ namespace json
         if (!IsString())
             throw logic_error("");
 
-        return get<string>(value);
+        return get<string>(*this);
     }
 
     size_t Node::GetVariantIndex() const
     {
-        return value.index();
+        return (*this).index();
     }
     auto Node::GetVaruant() const
     {
-        return value;
+        return *this;
     }
 
     bool operator==(const Node& lhs, const Node& rhs)

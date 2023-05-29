@@ -19,9 +19,9 @@ namespace json
         using runtime_error::runtime_error;
     };
 
-    class Node
+    class Node : public std::variant<std::nullptr_t, bool, Array, Dict, int, double, std::string>
     {
-        using Value = std::variant<std::nullptr_t, bool, Array, Dict, int, double, std::string>;
+        using variant = variant;
     public:
         Node();
         Node(std::nullptr_t ptr);
@@ -50,9 +50,6 @@ namespace json
 
         size_t GetVariantIndex() const;
         auto GetVaruant() const;
-
-    private:
-        Value value;
     };
 
     bool operator==(const Node& lhs, const Node& rhs);

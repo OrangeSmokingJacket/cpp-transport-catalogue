@@ -1,11 +1,8 @@
 #pragma once
 
 #include "transport_catalogue.h"
-#include "json.h"
+#include "json_reader.h"
 #include "map_renderer.h"
-
-#include <algorithm>
-#include <sstream>
 
 
  class RequestHandler
@@ -17,13 +14,6 @@
 	 json::Document ReturnDocument();
 
  private:
-
-     void ParseInputRequest(const json::Node& request);
-	 void ParseOutputRequest(const json::Node& request);
-	 void ParseRenderSetting(const json::Dict& render_settings);
-
-     svg::Color ParseColor(const json::Node& node);
-	 json::Dict ParseJSON(std::istream& input);
 
      TransportCatalogue& catalogue;
 	 json::Array output;
