@@ -1,26 +1,67 @@
 #include "request_handler.h"
 
-void RequestHandler::ParseInput(std::istream& input)
+
+std::optional<RouteStat> RequestHandler::GetBusStat(const std::string& name) const
 {
-    json::Dict requests = ParseJSON(input);
+    RouteStat result;
+	std::optional<Route> route = catalogue.GetRoute(name);
+	if (route)
+	{
+		result.route_length = catalogue.CalculateRouteLength(name);
+		result.curvature = result.route_length / catalogue.CalculateRouteLength_RAW(name);
+		result.stop_count = route.value().GetStopsCount();
+		result.unique_stop_count = route.value().GetRoutesUniqueStops();
 
-    json::Array input_requests = requests.at("base_requests").AsArray();
-    for (const json::Node& request : input_requests)
-    {
-        ParseInputRequest(request, catalogue);
-    }
+		return result;
+	}
+	else
+	{
+		return {};
+	}
+}
+std::optional<StopStat> RequestHandler::GetStopStat(const std::string& name) const
+{
+	StopStat result;
+	std::optional<Stop> stop = catalogue.GetStop(name);
+	if (stop)
+	{
+		std::set<std::string> routes;
+		for (Route* route : stop.value().GetRoutes())
+		{
+			routes.insert(route->GetName());
+		}
+		for (const std::string& route : routes)
+		{
+			result.routes_arr.push_back(route);
+		}
+		return result;
+	}
+	else
+	{
+		return {};
+	}
+}
 
-	json::Dict render_settings = requests.at("render_settings").AsMap();
-	ParseRenderSetting(render_settings, map_renderer);
+svg::Document RequestHandler::RenderMap() const
+{
+	return map_renderer.CreateCanvas(catalogue.GetAllRoutes());
+}
 
-    json::Array output_requests = requests.at("stat_requests").AsArray();
-    for (const json::Node& request : output_requests)
-    {
-        ParseOutputRequest(request, catalogue, map_renderer, output);
-    }
+void RequestHandler::AddToOutput(json::Dict&& result)
+{
+	output.emplace_back(result);
 }
 json::Document RequestHandler::ReturnDocument()
 {
     json::Document result(output);
     return result;
+}
+
+TransportCatalogue& RequestHandler::GetCatalogueRef()
+{
+	return catalogue;
+}
+renderer::MapRenderer& RequestHandler::GetRendererRef()
+{
+	return map_renderer;
 }

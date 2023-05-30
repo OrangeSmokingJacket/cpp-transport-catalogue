@@ -1,6 +1,26 @@
 #include "json_reader.h"
 
 
+void ParseInput(std::istream& input, RequestHandler& request_handler)
+{
+	json::Dict requests = ParseJSON(input);
+
+	json::Array input_requests = requests.at("base_requests").AsArray();
+	for (const json::Node& request : input_requests)
+	{
+		ParseInputRequest(request, request_handler.GetCatalogueRef());
+	}
+
+	json::Dict render_settings = requests.at("render_settings").AsMap();
+	ParseRenderSetting(render_settings, request_handler.GetRendererRef());
+
+	json::Array output_requests = requests.at("stat_requests").AsArray();
+	for (const json::Node& request : output_requests)
+	{
+		ParseOutputRequest(request, request_handler);
+	}
+}
+
 void ParseInputRequest(const json::Node& request, TransportCatalogue& catalogue)
 {
 	json::Dict specifics = request.AsMap();
@@ -51,7 +71,7 @@ void ParseInputRequest(const json::Node& request, TransportCatalogue& catalogue)
 
 	throw std::logic_error("\"type\" is not correct.");
 }
-void ParseOutputRequest(const json::Node& request, TransportCatalogue& catalogue, renderer::MapRenderer& map_renderer, json::Array& output)
+void ParseOutputRequest(const json::Node& request, RequestHandler& request_handler)
 {
 	json::Dict result;
 	json::Dict specifics = request.AsMap();
@@ -62,20 +82,10 @@ void ParseOutputRequest(const json::Node& request, TransportCatalogue& catalogue
 	if (type == "Stop")
 	{
 		std::string name = specifics.at("name").AsString();
-		std::optional<Stop> stop = catalogue.GetStop(name);
-		if (stop)
+		std::optional<StopStat> stat = request_handler.GetStopStat(name);
+		if (stat)
 		{
-			json::Array routes_arr;
-			std::set<std::string> routes;
-			for (Route* route : stop.value().GetRoutes())
-			{
-				routes.insert(route->GetName());
-			}
-			for (const std::string& route : routes)
-			{
-				routes_arr.push_back(route);
-			}
-			result.insert({ "buses",  routes_arr });
+			result.insert({ "buses",  stat.value().routes_arr });
 		}
 		else
 		{
@@ -84,19 +94,18 @@ void ParseOutputRequest(const json::Node& request, TransportCatalogue& catalogue
 			result.insert({ "error_message", error_node });
 		}
 
-		output.emplace_back(result);
+		request_handler.AddToOutput(std::move(result));
 	}
 	if (type == "Bus")
 	{
 		std::string name = specifics.at("name").AsString();
-		std::optional<Route> route = catalogue.GetRoute(name);
-		if (route)
+		std::optional<RouteStat> stat = request_handler.GetBusStat(name);
+		if (stat)
 		{
-			double route_length = catalogue.CalculateRouteLength(name);
-			result.insert({ "curvature",  route_length / catalogue.CalculateRouteLength_RAW(name) });
-			result.insert({ "route_length", route_length });
-			result.insert({ "stop_count", route.value().GetStopsCount() });
-			result.insert({ "unique_stop_count", route.value().GetRoutesUniqueStops() });
+			result.insert({ "curvature",  stat.value().curvature });
+			result.insert({ "route_length", stat.value().route_length });
+			result.insert({ "stop_count", stat.value().stop_count });
+			result.insert({ "unique_stop_count", stat.value().unique_stop_count });
 		}
 		else
 		{
@@ -105,15 +114,15 @@ void ParseOutputRequest(const json::Node& request, TransportCatalogue& catalogue
 			result.insert({ "error_message", error_node });
 		}
 
-		output.emplace_back(result);
+		request_handler.AddToOutput(std::move(result));
 	}
 	if (type == "Map")
 	{
 		std::ostringstream s;
-		map_renderer.CreateCanvas(catalogue.GetAllRoutes()).Render(s);
+		request_handler.RenderMap().Render(s);
 		result.insert({ "map", s.str() });
 
-		output.emplace_back(result);
+		request_handler.AddToOutput(std::move(result));
 	}
 }
 void ParseRenderSetting(const json::Dict& render_settings, renderer::MapRenderer& map_renderer)

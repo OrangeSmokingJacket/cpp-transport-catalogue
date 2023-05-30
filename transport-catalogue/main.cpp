@@ -1,5 +1,6 @@
 #include "transport_catalogue.h"
 #include "request_handler.h"
+#include "json_reader.h"
 
 #include <iomanip>
 
@@ -11,6 +12,6 @@ int main()
 	TransportCatalogue catalogue;
 	renderer::MapRenderer renderer;
 	RequestHandler handler(catalogue, renderer);
-	handler.ParseInput(std::cin);
+	ParseInput(std::cin, handler);
 	json::Print(handler.ReturnDocument(), std::cout);
 }
