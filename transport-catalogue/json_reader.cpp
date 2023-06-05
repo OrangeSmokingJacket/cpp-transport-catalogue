@@ -11,7 +11,7 @@ void ParseInput(std::istream& input, RequestHandler& request_handler)
 		ParseInputRequest(request, request_handler.GetCatalogueRef());
 	}
 
-	json::Dict render_settings = requests.at("render_settings").AsMap();
+	json::Dict render_settings = requests.at("render_settings").AsDict();
 	ParseRenderSetting(render_settings, request_handler.GetRendererRef());
 
 	json::Array output_requests = requests.at("stat_requests").AsArray();
@@ -23,7 +23,7 @@ void ParseInput(std::istream& input, RequestHandler& request_handler)
 
 void ParseInputRequest(const json::Node& request, TransportCatalogue& catalogue)
 {
-	json::Dict specifics = request.AsMap();
+	json::Dict specifics = request.AsDict();
 	std::string type = specifics.at("type").AsString();
 	std::string name = specifics.at("name").AsString();
 
@@ -38,7 +38,7 @@ void ParseInputRequest(const json::Node& request, TransportCatalogue& catalogue)
 			coords.lng = specifics.at("longitude").AsDouble();
 		if (specifics.contains("road_distances"))
 		{
-			for (const auto& [stop, dst] : specifics.at("road_distances").AsMap())
+			for (const auto& [stop, dst] : specifics.at("road_distances").AsDict())
 			{
 				distances.push_back({ stop, dst.AsDouble() });
 			}
@@ -73,28 +73,25 @@ void ParseInputRequest(const json::Node& request, TransportCatalogue& catalogue)
 }
 void ParseOutputRequest(const json::Node& request, RequestHandler& request_handler)
 {
-	json::Dict result;
-	json::Dict specifics = request.AsMap();
+	json::Builder result;
+	result.StartDict();
+	json::Dict specifics = request.AsDict();
 	int id = specifics.at("id").AsInt();
 	std::string type = specifics.at("type").AsString();
 
-	result.insert({ "request_id", id });
+	result.Key("request_id").Value(id);
 	if (type == "Stop")
 	{
 		std::string name = specifics.at("name").AsString();
 		std::optional<StopStat> stat = request_handler.GetStopStat(name);
 		if (stat)
-		{
-			result.insert({ "buses",  stat.value().routes_arr });
-		}
+			result.Key("buses").Value(stat.value().routes_arr);
 		else
-		{
-			using namespace std::literals;
-			json::Node error_node = { "not found"s };		 //for some reson, without string literal c++ thinks it is a boolean...
-			result.insert({ "error_message", error_node });
-		}
+			result.Key("error_message").Value("not found");
 
-		request_handler.AddToOutput(std::move(result));
+		result.EndDict();
+		request_handler.AddToOutput(std::move(result.Build()));
+		return;
 	}
 	if (type == "Bus")
 	{
@@ -102,27 +99,29 @@ void ParseOutputRequest(const json::Node& request, RequestHandler& request_handl
 		std::optional<RouteStat> stat = request_handler.GetBusStat(name);
 		if (stat)
 		{
-			result.insert({ "curvature",  stat.value().curvature });
-			result.insert({ "route_length", stat.value().route_length });
-			result.insert({ "stop_count", stat.value().stop_count });
-			result.insert({ "unique_stop_count", stat.value().unique_stop_count });
+			result.Key("curvature").Value(stat.value().curvature);
+			result.Key("route_length").Value(stat.value().route_length);
+			result.Key("stop_count").Value(stat.value().stop_count);
+			result.Key("unique_stop_count").Value(stat.value().unique_stop_count);
 		}
 		else
 		{
-			using namespace std::literals;
-			json::Node error_node = { "not found"s };		 //for some reson, without string literal c++ thinks it is a boolean...
-			result.insert({ "error_message", error_node });
+			result.Key("error_message").Value("not found");
 		}
 
-		request_handler.AddToOutput(std::move(result));
+		result.EndDict();
+		request_handler.AddToOutput(std::move(result.Build()));
+		return;
 	}
 	if (type == "Map")
 	{
 		std::ostringstream s;
 		request_handler.RenderMap().Render(s);
-		result.insert({ "map", s.str() });
+		result.Key("map").Value(s.str());
 
-		request_handler.AddToOutput(std::move(result));
+		result.EndDict();
+		request_handler.AddToOutput(std::move(result.Build()));
+		return;
 	}
 }
 void ParseRenderSetting(const json::Dict& render_settings, renderer::MapRenderer& map_renderer)
@@ -178,5 +177,5 @@ svg::Color ParseColor(const json::Node& node)
 json::Dict ParseJSON(std::istream& input)
 {
 	json::Document doc = json::Load(input);
-	return doc.GetRoot().AsMap();
+	return doc.GetRoot().AsDict();
 }

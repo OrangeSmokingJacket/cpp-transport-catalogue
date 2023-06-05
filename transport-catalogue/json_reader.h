@@ -1,6 +1,5 @@
 #pragma once
 
-#include "json.h"
 #include "svg.h"
 #include "request_handler.h"
 

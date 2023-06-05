@@ -47,13 +47,13 @@ svg::Document RequestHandler::RenderMap() const
 	return map_renderer.CreateCanvas(catalogue.GetAllRoutes());
 }
 
-void RequestHandler::AddToOutput(json::Dict&& result)
+void RequestHandler::AddToOutput(json::Node&& result)
 {
-	output.emplace_back(result);
+	output.Value(result);
 }
 json::Document RequestHandler::ReturnDocument()
 {
-    json::Document result(output);
+    json::Document result(output.EndArray().Build());
     return result;
 }
 
