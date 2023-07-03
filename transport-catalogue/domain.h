@@ -25,7 +25,7 @@ public:
 
 	const std::string GetName() const;
 	const polar_coordinates::Coordinates GetCoordinates() const;
-	std::set<Route*> GetRoutes();
+	const std::set<Route*>& GetRoutes() const;
 
 	Stop& operator=(const Stop& other);
 
@@ -54,8 +54,9 @@ public:
 	Route() = default;
 	Route(const std::string name_, std::vector<Stop*> stops_, RouteType type_) : name(name_), stops(stops_), type(type_) {}
 
-	std::string GetName();
-	std::vector<Stop*> GetStops() const;
+	std::string GetName() const;
+	const std::vector<Stop*>& GetStops() const;
+	std::vector<Stop*> GetFullRoute() const;
 	RouteType GetRouteType() const;
 	int GetStopsCount() const;
 	int GetRoutesUniqueStops();

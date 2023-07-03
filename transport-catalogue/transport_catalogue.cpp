@@ -63,6 +63,14 @@ std::vector<Route*> TransportCatalogue::GetAllRoutes()
 	std::sort(result.begin(), result.end(), [](Route* lhs, Route* rhs) { return lhs->GetName() < rhs->GetName(); });
 	return result;
 }
+const std::unordered_map<std::string, Stop>& TransportCatalogue::GetStopsRef() const
+{
+	return all_stops;
+}
+const std::unordered_map<std::string, Route>& TransportCatalogue::GetRoutesRef() const
+{
+	return all_routes;
+}
 
 double TransportCatalogue::GetDistanceBetweenStops(const std::string& name_a, const std::string& name_b) const
 {
@@ -77,7 +85,7 @@ double TransportCatalogue::GetDistanceBetweenStops(const std::string& name_a, co
 double TransportCatalogue::CalculateRouteLength(const std::string& name) const
 {
 	double result = 0.0;
-	std::vector<Stop*> stops = all_routes.at(name).GetStops();
+	const std::vector<Stop*>& stops = all_routes.at(name).GetStops();
 
 	// It could be one if and two cicles or one cicle and stops_names.size() if's
 
@@ -102,7 +110,7 @@ double TransportCatalogue::CalculateRouteLength(const std::string& name) const
 double TransportCatalogue::CalculateRouteLength_RAW(const std::string& name) const
 {
 	double result = 0.0;
-	std::vector<Stop*> stops = all_routes.at(name).GetStops();
+	const std::vector<Stop*>& stops = all_routes.at(name).GetStops();
 	for (size_t i = 1; i < stops.size(); i++)
 	{
 		result += ComputeDistance(stops[i - 1]->GetCoordinates(), stops[i]->GetCoordinates());

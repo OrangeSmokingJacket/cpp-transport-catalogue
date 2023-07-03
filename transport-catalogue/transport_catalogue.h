@@ -17,6 +17,8 @@ public:
 	std::optional<Stop> GetStop(const std::string& name);
 	std::optional<Route> GetRoute(const std::string& name);
 	std::vector<Route*> GetAllRoutes();
+	const std::unordered_map<std::string, Stop>& GetStopsRef() const;
+	const std::unordered_map<std::string, Route>& GetRoutesRef() const;
 
 	double GetDistanceBetweenStops(const std::string& name_a, const std::string& name_b) const;
 

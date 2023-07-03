@@ -11,6 +11,9 @@ void ParseInput(std::istream& input, RequestHandler& request_handler)
 		ParseInputRequest(request, request_handler.GetCatalogueRef());
 	}
 
+	json::Dict routing_settings = requests.at("routing_settings").AsDict();
+	ParseRoutingSettings(routing_settings, request_handler);
+
 	json::Dict render_settings = requests.at("render_settings").AsDict();
 	ParseRenderSetting(render_settings, request_handler.GetRendererRef());
 
@@ -71,6 +74,14 @@ void ParseInputRequest(const json::Node& request, TransportCatalogue& catalogue)
 
 	throw std::logic_error("\"type\" is not correct.");
 }
+void ParseRoutingSettings(const json::Dict& routing_settings, RequestHandler& request_handler)
+{
+	if (!routing_settings.contains("bus_wait_time") || !routing_settings.contains("bus_velocity"))
+		throw std::logic_error("incomplete route_settings");
+
+	request_handler.SetBusSpeed(routing_settings.at("bus_velocity").AsDouble());
+	request_handler.SetWaitingTime(routing_settings.at("bus_wait_time").AsInt());
+}
 void ParseOutputRequest(const json::Node& request, RequestHandler& request_handler)
 {
 	json::Builder result;
@@ -89,14 +100,11 @@ void ParseOutputRequest(const json::Node& request, RequestHandler& request_handl
 		else
 			result.Key("error_message").Value("not found");
 
-		result.EndDict();
-		request_handler.AddToOutput(std::move(result.Build()));
-		return;
 	}
-	if (type == "Bus")
+	else if (type == "Bus")
 	{
 		std::string name = specifics.at("name").AsString();
-		std::optional<RouteStat> stat = request_handler.GetBusStat(name);
+		std::optional<BusStat> stat = request_handler.GetBusStat(name);
 		if (stat)
 		{
 			result.Key("curvature").Value(stat.value().curvature);
@@ -108,21 +116,48 @@ void ParseOutputRequest(const json::Node& request, RequestHandler& request_handl
 		{
 			result.Key("error_message").Value("not found");
 		}
-
-		result.EndDict();
-		request_handler.AddToOutput(std::move(result.Build()));
-		return;
 	}
-	if (type == "Map")
+	else if (type == "Route")
+	{
+		std::string from = specifics.at("from").AsString();
+		std::string to = specifics.at("to").AsString();
+		std::optional<RouteStat> stat = request_handler.GetRouteStat(from, to);
+		if (stat)
+		{
+			result.Key("total_time").Value(stat.value().info.weight);
+			result.Key("items").StartArray();
+			for (const graph::EdgeId id : stat.value().info.edges)
+			{
+				result.StartDict();
+				result.Key("type").Value("Wait");
+				result.Key("stop_name").Value(request_handler.GetRouterRef().GetStopName(request_handler.GetRouterRef().GetEdge(id).from));
+				result.Key("time").Value(request_handler.GetWaitingTime());
+				result.EndDict();
+
+				result.StartDict();
+				result.Key("type").Value("Bus");
+				std::pair<std::string, size_t> edge_data = request_handler.GetRouterRef().GetEdgeData(id);
+				result.Key("bus").Value(edge_data.first);
+				result.Key("span_count").Value(static_cast<int>(edge_data.second));
+				result.Key("time").Value(request_handler.GetRouterRef().GetEdge(id).weight - request_handler.GetWaitingTime());
+				result.EndDict();
+			}
+			result.EndArray();
+		}
+		else
+		{
+			result.Key("error_message").Value("not found");
+		}
+	}
+	else if (type == "Map")
 	{
 		std::ostringstream s;
 		request_handler.RenderMap().Render(s);
 		result.Key("map").Value(s.str());
-
-		result.EndDict();
-		request_handler.AddToOutput(std::move(result.Build()));
-		return;
 	}
+	result.EndDict();
+	request_handler.AddToOutput(std::move(result.Build()));
+	return;
 }
 void ParseRenderSetting(const json::Dict& render_settings, renderer::MapRenderer& map_renderer)
 {

@@ -175,17 +175,10 @@ namespace renderer
 	void MapRenderer::AddRouteToCanvas(svg::Document& canvas, Route* route, const SphereProjector& projection)
 	{
 		svg::Polyline line;
-		std::vector<Stop*> stops = route->GetStops();
+		const std::vector<Stop*>& stops = route->GetFullRoute();
 		for (auto it = stops.begin(); it != stops.end(); it++)
 		{
 			line.AddPoint(projection((*it)->GetCoordinates()));
-		}
-		if (route->GetRouteType() == Route::Linear)
-		{
-			for (auto it = stops.rbegin() + 1; it != stops.rend(); it++)
-			{
-				line.AddPoint(projection((*it)->GetCoordinates()));
-			}
 		}
 
 		svg::Color color = GetColorFromPallete();
@@ -198,7 +191,7 @@ namespace renderer
 	}
 	void MapRenderer::AddRouteNameToCanvas(svg::Document& canvas, Route* route, const SphereProjector& projection)
 	{
-		std::vector<Stop*> stops = route->GetStops();
+		const std::vector<Stop*>& stops = route->GetStops();
 		svg::Color color = GetColorFromPallete();
 
 		svg::Text underlayer;

@@ -1,9 +1,26 @@
 #include "request_handler.h"
 
 
-std::optional<RouteStat> RequestHandler::GetBusStat(const std::string& name) const
+void RequestHandler::SetBusSpeed(double speed)
 {
-    RouteStat result;
+	bus_speed = speed / 60 * 1000;
+}
+void RequestHandler::SetWaitingTime(int time)
+{
+	waiting_time = time;
+}
+double RequestHandler::GetBusSpeed()
+{
+	return bus_speed;
+}
+int RequestHandler::GetWaitingTime()
+{
+	return waiting_time;
+}
+
+std::optional<BusStat> RequestHandler::GetBusStat(const std::string& name) const
+{
+    BusStat result;
 	std::optional<Route> route = catalogue.GetRoute(name);
 	if (route)
 	{
@@ -26,7 +43,7 @@ std::optional<StopStat> RequestHandler::GetStopStat(const std::string& name) con
 	if (stop)
 	{
 		std::set<std::string> routes;
-		for (Route* route : stop.value().GetRoutes())
+		for (const Route* route : stop.value().GetRoutes())
 		{
 			routes.insert(route->GetName());
 		}
@@ -40,6 +57,18 @@ std::optional<StopStat> RequestHandler::GetStopStat(const std::string& name) con
 	{
 		return {};
 	}
+}
+std::optional<RouteStat> RequestHandler::GetRouteStat(const std::string& from, const std::string& to)
+{
+	if (!router)
+		router = std::make_unique<TransportRouter>(catalogue, bus_speed, waiting_time);
+
+	std::optional<graph::Router<double>::RouteInfo> info = router.get()->FindPath(from, to);
+
+	if (info.has_value())
+		return RouteStat{ info.value() };
+	else
+		return std::nullopt;
 }
 
 svg::Document RequestHandler::RenderMap() const
@@ -60,6 +89,10 @@ json::Document RequestHandler::ReturnDocument()
 TransportCatalogue& RequestHandler::GetCatalogueRef()
 {
 	return catalogue;
+}
+TransportRouter& RequestHandler::GetRouterRef()
+{
+	return *router.get();
 }
 renderer::MapRenderer& RequestHandler::GetRendererRef()
 {

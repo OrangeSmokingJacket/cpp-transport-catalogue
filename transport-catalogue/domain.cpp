@@ -18,7 +18,7 @@ const polar_coordinates::Coordinates Stop::GetCoordinates() const
 {
 	return coords;
 }
-std::set<Route*> Stop::GetRoutes()
+const std::set<Route*>& Stop::GetRoutes() const
 {
 	return routes;
 }
@@ -56,13 +56,23 @@ bool Stop::operator>=(const Stop& other) const
 }
 
 
-std::string Route::GetName()
+std::string Route::GetName() const
 {
 	return name;
 }
-std::vector<Stop*> Route::GetStops() const
+const std::vector<Stop*>& Route::GetStops() const
 {
 	return stops;
+}
+std::vector<Stop*> Route::GetFullRoute() const
+{
+	if (type == RouteType::Curcular)
+		return stops;
+	
+	std::vector<Stop*> result(stops.size() * 2 - 1);
+	std::copy(stops.begin(), stops.end(), result.begin());
+	std::copy(stops.rbegin()++, stops.crend(), result.begin() + (stops.size() - 1));
+	return result;
 }
 Route::RouteType Route::GetRouteType() const
 {
