@@ -2,7 +2,9 @@
 
 #include "svg.h"
 #include "domain.h"
+#include "map_renderer.pb.h"
 
+#include <fstream>
 
 namespace renderer
 {
@@ -26,6 +28,8 @@ namespace renderer
 
 		svg::Document CreateCanvas(std::vector<Route*> routes);
 
+		rend::MapRenderer Serialize();
+		void Deserialize(rend::MapRenderer map_renderer);
 
 	private:
 		void AddRouteToCanvas(svg::Document& canvas, Route* route, const SphereProjector& projection);

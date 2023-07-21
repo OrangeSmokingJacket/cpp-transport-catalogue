@@ -172,6 +172,127 @@ namespace renderer
 		return canvas;
 	}
 
+	rend::Color SVG_2_Rend(const svg::Color& color)
+	{
+		rend::Color c;
+		if (std::holds_alternative<std::string>(color))
+		{
+            rend::Color_String color_string;
+            color_string.set_color(std::get<std::string>(color));
+			*c.mutable_color_string() = std::move(color_string);
+		}
+		else if (std::holds_alternative<svg::Rgb>(color))
+		{
+			rend::Color_RGB rgb;
+
+			rgb.set_r(std::get<svg::Rgb>(color).red);
+			rgb.set_g(std::get<svg::Rgb>(color).green);
+			rgb.set_b(std::get<svg::Rgb>(color).blue);
+
+			*c.mutable_color_rgb() = std::move(rgb);
+		}
+		else if (std::holds_alternative<svg::Rgba>(color))
+		{
+			rend::Color_RGBA rgba;
+			
+			rgba.set_r(std::get<svg::Rgba>(color).red);
+			rgba.set_g(std::get<svg::Rgba>(color).green);
+			rgba.set_b(std::get<svg::Rgba>(color).blue);
+			rgba.set_opacity(std::get<svg::Rgba>(color).opacity);
+
+			*c.mutable_color_rgba() = std::move(rgba);
+		}
+		return c;
+	}
+	rend::Point SVG_2_Rend(const svg::Point& point)
+	{
+		rend::Point p;
+		p.set_x(point.x);
+		p.set_y(point.y);
+		return p;
+	}
+	svg::Color Rend_2_SVG(const rend::Color& color)
+	{
+        if (color.has_color_rgba())
+		{
+			svg::Rgba rgba;
+			
+			rgba.red = color.color_rgba().r();
+			rgba.green = color.color_rgba().g();
+			rgba.blue = color.color_rgba().b();
+			rgba.opacity = color.color_rgba().opacity();
+
+			return rgba;
+		}
+		else if (color.has_color_rgb())
+		{
+			svg::Rgb rgb;
+
+			rgb.red = color.color_rgb().r();
+			rgb.green = color.color_rgb().g();
+			rgb.blue = color.color_rgb().b();
+
+			return rgb;
+		}
+		else if (color.has_color_string())
+		{
+			return { color.color_string().color() };
+		}
+		else
+            return {};
+	}
+	svg::Point Rend_2_SVG(const rend::Point& point)
+	{
+		return { point.x(), point.y() };
+	}
+
+	rend::MapRenderer MapRenderer::Serialize()
+	{
+		rend::MapRenderer map_renderer;
+
+		map_renderer.set_width(width);
+		map_renderer.set_height(height);
+		map_renderer.set_padding(padding);
+		map_renderer.set_line_width(line_width);
+		map_renderer.set_stop_radius(stop_radius);
+		map_renderer.set_stop_label_font_size(stop_label_font_size);
+		map_renderer.set_bus_label_font_size(bus_label_font_size);
+		map_renderer.set_underlayer_width(underlayer_width);
+
+		for(const svg::Color& color : color_pallete)
+		{
+			(*map_renderer.mutable_pallete()).Add(std::move(SVG_2_Rend(color)));
+		}
+		
+		*map_renderer.mutable_stop_label_offset() = std::move(SVG_2_Rend(stop_label_offset));
+		*map_renderer.mutable_bus_label_offset() = std::move(SVG_2_Rend(bus_label_offset));
+		*map_renderer.mutable_underlayer_color() = std::move(SVG_2_Rend(underlayer_color));
+
+		return map_renderer;
+	}
+	void MapRenderer::Deserialize(rend::MapRenderer map_renderer)
+	{
+		width = map_renderer.width();
+		height = map_renderer.height();
+		padding = map_renderer.padding();
+		line_width = map_renderer.line_width();
+		stop_radius = map_renderer.stop_radius();
+		stop_label_font_size = map_renderer.stop_label_font_size();
+		bus_label_font_size = map_renderer.bus_label_font_size();
+		underlayer_width = map_renderer.underlayer_width();
+
+		color_pallete.reserve(map_renderer.pallete_size());
+		for(rend::Color c : map_renderer.pallete())
+		{
+			color_pallete.push_back(std::move(Rend_2_SVG(c)));
+		}
+
+		stop_label_offset = std::move(Rend_2_SVG(map_renderer.stop_label_offset()));
+		bus_label_offset = std::move(Rend_2_SVG(map_renderer.bus_label_offset()));
+		underlayer_color = std::move(Rend_2_SVG(map_renderer.underlayer_color()));
+        current_pallete_index = 0;
+	}
+
 	void MapRenderer::AddRouteToCanvas(svg::Document& canvas, Route* route, const SphereProjector& projection)
 	{
 		svg::Polyline line;
@@ -288,5 +409,4 @@ namespace renderer
 		current_pallete_index = (current_pallete_index + 1) % color_pallete.size();
 		return color_pallete.at(prev_index);
 	}
-
 }

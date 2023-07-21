@@ -57,9 +57,9 @@ public:
 	std::string GetName() const;
 	const std::vector<Stop*>& GetStops() const;
 	std::vector<Stop*> GetFullRoute() const;
-	RouteType GetRouteType() const;
 	int GetStopsCount() const;
 	int GetRoutesUniqueStops();
+	Route::RouteType GetRouteType() const;
 
 	bool operator==(const Route& other) const;
 	bool operator!=(const Route& other) const;

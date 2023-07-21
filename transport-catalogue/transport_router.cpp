@@ -2,7 +2,7 @@
 
 std::optional<graph::Router<double>::RouteInfo> TransportRouter::FindPath(const std::string& from, const std::string& to)
 {
-	if (!all_stops.contains(from) || !all_stops.contains(to))
+	if (all_stops.count(from) == 0 || all_stops.count(to) == 0)
 		return std::nullopt;
 
 	if (all_stops.at(from).GetRoutes().size() == 0 || all_stops.at(to).GetRoutes().size() == 0)

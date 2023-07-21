@@ -23,6 +23,8 @@ public:
 	std::pair<std::string, size_t> GetEdgeData(graph::EdgeId id);
 	int GetWaitingTime() const;
 
+
+
 private:
 	void ConstructIndexMap();
 	void ConstructGraph();

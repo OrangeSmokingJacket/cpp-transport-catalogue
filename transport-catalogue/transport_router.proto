@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package router;
+
+message RouterSettings
+{
+	double bus_speed = 1;
+	int32 stop_waiting_time = 2;
+}

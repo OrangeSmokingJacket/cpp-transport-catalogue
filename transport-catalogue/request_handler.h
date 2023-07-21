@@ -5,6 +5,8 @@
 #include "map_renderer.h"
 #include "transport_router.h"
 
+#include "transport_router.h"
+
 struct BusStat
 {
     double route_length;
@@ -45,6 +47,14 @@ struct RouteStat
      TransportCatalogue& GetCatalogueRef();
      TransportRouter& GetRouterRef();
      renderer::MapRenderer& GetRendererRef();
+
+     catalogue::TransportCatalogue SerializeTransportCatalogue() const;
+     rend::MapRenderer SerializeMapRenderer() const;
+     router::RouterSettings SerializeRouterSettings() const;
+
+     void DeserializeTransportCatalogue(catalogue::TransportCatalogue t_cat);
+     void DeserializeMapRenderer(rend::MapRenderer map_rend);
+     void DeserializeRouterSettings(router::RouterSettings settings);
 
  private:
 

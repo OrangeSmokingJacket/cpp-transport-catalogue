@@ -1,0 +1,53 @@
+syntax = "proto3";
+
+package rend;
+
+message Color_String
+{
+    bytes color = 1;
+}
+message Color_RGB
+{
+    uint32 r = 1;
+    uint32 g = 2;
+    uint32 b = 3;
+}
+message Color_RGBA
+{
+    uint32 r = 1;
+    uint32 g = 2;
+    uint32 b = 3;
+    double opacity = 4;
+}
+
+message Color
+{
+    oneof color
+    {
+        Color_String color_string = 1;
+        Color_RGB color_rgb = 2;
+        Color_RGBA color_rgba = 3;
+    }
+}
+
+message Point
+{
+    double x = 1;
+    double y = 2;
+}
+
+message MapRenderer
+{
+    repeated Color pallete = 1;
+    double width = 2;
+    double height = 3;
+    double padding = 4;
+    double line_width = 5;
+    double stop_radius = 6;
+    int32 stop_label_font_size = 7;
+    Point stop_label_offset = 8;
+    int32 bus_label_font_size = 9;
+    Point bus_label_offset = 10;
+    Color underlayer_color = 11;
+    double underlayer_width = 12;
+}

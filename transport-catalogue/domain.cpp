@@ -74,10 +74,6 @@ std::vector<Stop*> Route::GetFullRoute() const
 	std::copy(stops.rbegin()++, stops.crend(), result.begin() + (stops.size() - 1));
 	return result;
 }
-Route::RouteType Route::GetRouteType() const
-{
-	return type;
-}
 int Route::GetStopsCount() const
 {
 	if (type == RouteType::Curcular)
@@ -94,6 +90,10 @@ int Route::GetRoutesUniqueStops()
 		unique.insert(stop);
 	}
 	return unique.size();
+}
+Route::RouteType Route::GetRouteType() const
+{
+	return type;
 }
 
 bool Route::operator==(const Route& other) const
