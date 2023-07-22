@@ -29,7 +29,12 @@ std::pair<std::string, size_t> TransportRouter::GetEdgeData(graph::EdgeId id)
 }
 int TransportRouter::GetWaitingTime() const
 {
-	return stop_waiting_time;
+	return settings.stop_waiting_time;
+}
+
+const TransportRouterSettings& TransportRouter::GetSettings() const
+{
+	return settings;
 }
 
 void TransportRouter::ConstructIndexMap()
@@ -54,7 +59,7 @@ void TransportRouter::ConstructGraph()
 			for (size_t index_2 = index_1 + 1; index_2 < stops.size(); index_2++)
 			{
 				accumulated_weight += catalogue.GetDistanceBetweenStops(stops[index_2 - 1]->GetName(), stops[index_2]->GetName());
-				graph::EdgeId id = routes_graph.AddEdge({ GetIndex(stops[index_1]->GetName()), GetIndex(stops[index_2]->GetName()), accumulated_weight / bus_speed + stop_waiting_time });
+				graph::EdgeId id = routes_graph.AddEdge({ GetIndex(stops[index_1]->GetName()), GetIndex(stops[index_2]->GetName()), accumulated_weight / settings.bus_speed + settings.stop_waiting_time });
 				bus_span_from_edge[id] = { route_name, index_2 - index_1 };
 			}
 		}

@@ -17,14 +17,12 @@ public:
 	void AddStopsDistances(const std::string& from, const std::string& to, double dst);
 	void AddRoute(const std::string& name, const std::vector<std::string>& stops_names, bool circular);
 
-	catalogue::TransportCatalogue Serialize();
-	void Deserialize(catalogue::TransportCatalogue catalogue);
-
 	std::optional<Stop> GetStop(const std::string& name);
 	std::optional<Route> GetRoute(const std::string& name);
 	std::vector<Route*> GetAllRoutes();
 	const std::unordered_map<std::string, Stop>& GetStopsRef() const;
 	const std::unordered_map<std::string, Route>& GetRoutesRef() const;
+	const std::unordered_map<std::pair<std::string, std::string>, double, StopPairHasher>& GetDistancesRef() const;
 
 	double GetDistanceBetweenStops(const std::string& name_a, const std::string& name_b) const;
 

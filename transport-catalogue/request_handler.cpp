@@ -98,35 +98,3 @@ renderer::MapRenderer& RequestHandler::GetRendererRef()
 {
 	return map_renderer;
 }
-
-catalogue::TransportCatalogue RequestHandler::SerializeTransportCatalogue() const
-{
-	return catalogue.Serialize();
-}
-rend::MapRenderer RequestHandler::SerializeMapRenderer() const
-{
-	return map_renderer.Serialize();
-}
-router::RouterSettings RequestHandler::SerializeRouterSettings() const
-{
-	router::RouterSettings settings;
-
-	settings.set_bus_speed(bus_speed);
-	settings.set_stop_waiting_time(waiting_time);
-
-	return settings;
-}
-
-void RequestHandler::DeserializeTransportCatalogue(catalogue::TransportCatalogue t_cat)
-{
-	catalogue.Deserialize(t_cat);
-}
-void RequestHandler::DeserializeMapRenderer(rend::MapRenderer map_rend)
-{
-	map_renderer.Deserialize(map_rend);
-}
-void RequestHandler::DeserializeRouterSettings(router::RouterSettings settings)
-{
-	bus_speed = settings.bus_speed();
-	waiting_time = settings.stop_waiting_time();
-}

@@ -13,6 +13,14 @@ public:
     void Load();
 
 private:
+    catalogue::TransportCatalogue SerializeTransportCatalogue() const;
+    rend::MapRenderer SerializeMapRenderer() const;
+    router::RouterSettings SerializeTransportRouter() const;
+
+    void DeserializeTransportCatalogue(catalogue::TransportCatalogue t_cat) const;
+    void DeserializeMapRenderer(rend::MapRenderer map_renderer) const;
+    void DeserializeTransportRouter(router::RouterSettings settings) const;
+
     std::filesystem::path path;
     RequestHandler& handler;
 };

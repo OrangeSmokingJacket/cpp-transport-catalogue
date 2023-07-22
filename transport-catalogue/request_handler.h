@@ -48,14 +48,6 @@ struct RouteStat
      TransportRouter& GetRouterRef();
      renderer::MapRenderer& GetRendererRef();
 
-     catalogue::TransportCatalogue SerializeTransportCatalogue() const;
-     rend::MapRenderer SerializeMapRenderer() const;
-     router::RouterSettings SerializeRouterSettings() const;
-
-     void DeserializeTransportCatalogue(catalogue::TransportCatalogue t_cat);
-     void DeserializeMapRenderer(rend::MapRenderer map_rend);
-     void DeserializeRouterSettings(router::RouterSettings settings);
-
  private:
 
      TransportCatalogue& catalogue;

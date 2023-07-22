@@ -6,10 +6,22 @@
 #include <map>
 #include <memory>
 
+struct TransportRouterSettings
+{
+	double bus_speed;
+	int stop_waiting_time;
+
+	TransportRouterSettings() = default;
+	TransportRouterSettings(double speed, int waiting_time)
+	{
+		bus_speed = speed;
+		stop_waiting_time = waiting_time;
+	}
+};
 class TransportRouter
 {
 public:
-	TransportRouter(TransportCatalogue& catalogue, double speed, int waiting_time) : catalogue(catalogue), bus_speed(speed), stop_waiting_time(waiting_time),
+	TransportRouter(TransportCatalogue& catalogue, double speed, int waiting_time) : catalogue(catalogue), settings(speed, waiting_time),
 		all_stops(catalogue.GetStopsRef()), all_routes(catalogue.GetRoutesRef()), routes_graph(all_stops.size())
 	{
 		ConstructIndexMap();
@@ -23,15 +35,14 @@ public:
 	std::pair<std::string, size_t> GetEdgeData(graph::EdgeId id);
 	int GetWaitingTime() const;
 
-
+	const TransportRouterSettings& GetSettings() const;
 
 private:
 	void ConstructIndexMap();
 	void ConstructGraph();
 
 	TransportCatalogue& catalogue;
-	double bus_speed;
-	int stop_waiting_time;
+	TransportRouterSettings settings;
 	const std::unordered_map<std::string, Stop>& all_stops;
 	const std::unordered_map<std::string, Route>& all_routes;
 
